@@ -13,7 +13,7 @@ OBJS = ${SRCS_C:.c=.o}
 OBJS += ${SRCS_CPP:.cpp=.o}
 
 all: $(OBJS) main.cpp
-	$(CC) main.cpp $(CFLAGS) $(LIBS) $(OBJS) -o cg_tests
+	$(CC) main.cpp $(CFLAGS) $(OBJS) $(LIBS) -o cg_tests
 
 debug: CFLAGS += -g
 debug: all	

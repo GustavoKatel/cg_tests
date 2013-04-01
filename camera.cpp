@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include <GL/glut.h>
+#include <GL/glu.h>
 #include <GL/gl.h>
 
 Camera *Camera::camera = NULL;
@@ -87,7 +88,7 @@ void Camera::translate(float dx, float dy, float dz)
 	look_z = inc(look_z,dz,0,0,1);
 }
 
-void translate_look(float ldx, float ldy)
+void Camera::translate_look(float ldx, float ldy)
 {
 	look_x = inc(look_x,ldx,1,0,0);
 	look_y = inc(look_y,ldy,0,1,0);
@@ -112,7 +113,7 @@ void Camera::update()
 	gluPerspective(55.0f,
 			viewport_w/viewport_h,
 			0.05f,
-			150f);
+			150.0f);
 	gluLookAt(pos_x,pos_y,pos_z,
 		look_x,look_y,look_z,
 		up_x,up_y,up_z);
