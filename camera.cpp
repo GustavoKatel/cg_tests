@@ -25,6 +25,8 @@ Camera::Camera()
 
 Camera::~Camera()
 {
+	delete camera;
+	camera=NULL;
 }
 
 void Camera::setPos(float px, float py, float pz)
@@ -79,29 +81,70 @@ void Camera::getViewport(float *w, float *h)
 //
 void Camera::translate(float dx, float dy, float dz)
 {
-	pos_x = inc(pos_x,dx,1,0,0);
-	pos_y = inc(pos_y,dy,0,1,0);
-	pos_z = inc(pos_z,dz,0,0,1);
-	//
-	look_x = inc(look_x,dx,1,0,0);
-	look_y = inc(look_y,dy,0,1,0);
-	look_z = inc(look_z,dz,0,0,1);
+	if(look_z-pos_z>=0)
+	{
+		pos_x-=dx;
+		look_x-=dx;
+		//
+		pos_y+=dy;
+		look_y+=dy;
+		//
+		pos_z+=dz;
+		look_z+=dz;
+	}
+	else
+	{
+		pos_x+=dx;
+		look_x+=dx;
+		//
+		pos_y-=dy;
+		look_y-=dy;
+		//
+		pos_z-=dz;
+		look_z-=dz;
+		//std::cout<<"loo_z: "<<look_z<<" pos_z: "<<pos_z<<std::endl;
+	}
 }
 
-void Camera::translate_look(float ldx, float ldy)
+void Camera::translate_look(float ldx, float ldy, float ldz)
 {
-	look_x = inc(look_x,ldx,1,0,0);
-	look_y = inc(look_y,ldy,0,1,0);
+	if(look_z-pos_z>=0)
+	{
+		look_x-=ldx;
+		//
+		look_y+=ldy;
+		//
+		look_z+=ldz;
+	}
+	else
+	{
+		look_x+=ldx;
+		look_y-=ldy;
+		look_z-=ldz;
+	}
 }
 
 float Camera::inc(float v1, float v2, float x, float y, float z)
 {
-	if( (1+look_z/1+abs(look_z)) - (1+pos_z/1+abs(pos_z)) >=0)
+	/*if( (1+look_z/1+abs(look_z)) - (1+pos_z/1+abs(pos_z)) >=0)
 	{
 		return v1-v2;
 	}else{
 		return v1+v2;
+	}*/
+	if(look_z-pos_z>=0)
+	{
+		if(x)
+			return v1-v2;
+		else
+			return v1+v2;
+	}else{
+		if(x)
+			return v1+v2;
+		else
+			return v1-v2;
 	}
+
 }
 
 void Camera::update()
@@ -117,4 +160,7 @@ void Camera::update()
 	gluLookAt(pos_x,pos_y,pos_z,
 		look_x,look_y,look_z,
 		up_x,up_y,up_z);
+	/*gluLookAt(0.0f, 0.0f, 0.0f,
+		0.0f,0.0f,1.0f,
+		0.0f, 1.0f, 0.0f);*/
 }

@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include "SOIL.h"
+#include "camera.h"
 
 Object::Object(const char *model_file_name)
 {
@@ -85,18 +86,18 @@ void Object::loadTextures()
 		}
 		total++;
 		textures[i]=ntexture;
-		//glGenTextures(1,&textures[i]);
+//		glGenTextures(1,&textures[i]);
 		std::cout<<"texture generated: "<<textures[i]<<std::endl;
 		glBindTexture(GL_TEXTURE_2D, textures[i]);
 
-		//glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ntexture);
+//		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ntexture);
 		//gluBuild2DMipmaps( GL_TEXTURE_2D, GL_RGB, img_width, img_height, GL_RGBA, GL_UNSIGNED_BYTE, ntexture);
 		//std::cout<<"i: "<<i<<std::endl;
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		//
-		//SOIL_free_image_data(ntexture);	
+//		SOIL_free_image_data(ntexture);	
 	}
 }
 
@@ -174,8 +175,15 @@ void Object::draw()
 	glPushMatrix();
 	//
 	glLoadIdentity();
+	//Camera
+	float cpx, cpy, cpz;
+	Camera::getCamera()->getPos(&cpx, &cpy, &cpz);
+	float clx, cly, clz;
+	Camera::getCamera()->getLook(&clx, &cly, &clz);
 	//
-	glTranslatef( this->pos_x, this->pos_y, this->pos_z);
+	glTranslatef(this->pos_x, 
+			this->pos_y, 
+			this->pos_z);
 	//
 	unsigned int i;
 	for(i=0;i<rot_list.size();i++)

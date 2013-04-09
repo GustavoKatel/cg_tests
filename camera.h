@@ -5,6 +5,7 @@ class Camera
 {
 public:
 	static Camera *getCamera();
+	static void destroy();
 	//
 	void setPos(float px, float py, float pz);
 	void getPos(float *px, float *py, float *pz);
@@ -20,7 +21,7 @@ public:
 	//
 	void translate(float dx, float dy, float dz);
 	//
-	void translate_look(float ldx, float ldy);
+	void translate_look(float ldx, float ldy, float ldz);
 	//
 	float inc(float v1, float v2, float x, float y, float z);
 	//

@@ -2,6 +2,6 @@
 #define DEFINES_H
 
 #define WIDTH 1080
-#define HEIGTH 724
+#define HEIGHT 724
 
 #endif
