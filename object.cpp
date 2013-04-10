@@ -178,12 +178,17 @@ void Object::draw()
 	//Camera
 	float cpx, cpy, cpz;
 	Camera::getCamera()->getPos(&cpx, &cpy, &cpz);
-	float clx, cly, clz;
-	Camera::getCamera()->getLook(&clx, &cly, &clz);
+	float angle_x, angle_y;
+	Camera::getCamera()->getLookAngle(&angle_x, &angle_y);
 	//
+	glTranslatef(-cpx, -cpy, -cpz);
 	glTranslatef(this->pos_x, 
 			this->pos_y, 
 			this->pos_z);
+	//
+	//camera rotate
+	glRotatef(angle_x, 1,0,0);
+	glRotatef(angle_y, 0,1,0);
 	//
 	unsigned int i;
 	for(i=0;i<rot_list.size();i++)

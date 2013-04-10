@@ -175,10 +175,10 @@ void Camera::update()
 			viewport_w/viewport_h,
 			0.05f,
 			150.0f);
-	gluLookAt(pos_x,pos_y,pos_z,
+	/*gluLookAt(pos_x,pos_y,pos_z,
 		look_x,look_y,look_z,
-		up_x,up_y,up_z);
-	/*gluLookAt(0.0f, 0.0f, 0.0f,
+		up_x,up_y,up_z);*/
+	gluLookAt(0.0f, 0.0f, 0.0f,
 		0.0f,0.0f,1.0f,
-		0.0f, 1.0f, 0.0f);*/
+		0.0f, 1.0f, 0.0f);
 }
