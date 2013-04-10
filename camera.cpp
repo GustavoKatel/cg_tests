@@ -21,6 +21,7 @@ Camera::Camera()
 	pos_x = pos_y = pos_z = 0.0;
 	look_x = look_y = look_z = 0.0;
 	up_x = up_z = 0.0; up_y = 1.0;
+	angle_x = angle_y = 0.0;
 }
 
 Camera::~Camera()
@@ -53,6 +54,17 @@ void Camera::getLook(float *lx, float *ly, float *lz)
 	if(lx) *lx = look_x;
 	if(ly) *ly = look_y;
 	if(lz) *lz = look_z;
+}
+
+void Camera::setLookAngle(float lax, float lay)
+{
+	this->angle_x = lax;
+	this->angle_y = lay;
+}
+void Camera::getLookAngle(float *lax, float *lay)
+{
+	if(lax) *lax = this->angle_x;
+	if(lay) *lay = this->angle_y;
 }
 //
 void Camera::setUp(float ux, float uy, float uz)
@@ -122,6 +134,12 @@ void Camera::translate_look(float ldx, float ldy, float ldz)
 		look_y-=ldy;
 		look_z-=ldz;
 	}
+}
+
+void Camera::translate_look_angle(float ldx, float ldy)
+{
+	this->angle_x+=ldx;
+	this->angle_y+=ldy;
 }
 
 float Camera::inc(float v1, float v2, float x, float y, float z)

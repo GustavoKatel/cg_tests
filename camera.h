@@ -13,6 +13,9 @@ public:
 	void setLook(float lx, float ly, float lz);
 	void getLook(float *lx, float *ly, float *lz);
 	//
+	void setLookAngle(float lax, float lay);
+	void getLookAngle(float *lax, float *lay);
+	//
 	void setUp(float ux, float uy, float uz);
 	void getUp(float *ux, float *uy, float *uz);
 	//
@@ -22,6 +25,7 @@ public:
 	void translate(float dx, float dy, float dz);
 	//
 	void translate_look(float ldx, float ldy, float ldz);
+	void translate_look_angle(float ldx, float ldy);
 	//
 	float inc(float v1, float v2, float x, float y, float z);
 	//
@@ -34,6 +38,7 @@ protected:
 	
 private:
 	float pos_x, pos_y, pos_z;
+	float angle_x, angle_y;
 	float look_x, look_y, look_z;
 	float up_x, up_y, up_z;
 	float viewport_w, viewport_h;
