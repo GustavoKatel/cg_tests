@@ -139,7 +139,16 @@ void Camera::translate_look(float ldx, float ldy, float ldz)
 void Camera::translate_look_angle(float ldx, float ldy)
 {
 	this->angle_x+=ldx;
+	if(angle_x>360)
+		angle_x=angle_x-360;
+	if(angle_x<0)
+		angle_x=angle_x+360;
+
 	this->angle_y+=ldy;
+	if(angle_y>360)
+		angle_y=angle_y-360;
+	if(angle_y<0)
+		angle_y=angle_y+360;
 }
 
 float Camera::inc(float v1, float v2, float x, float y, float z)
@@ -179,6 +188,6 @@ void Camera::update()
 		look_x,look_y,look_z,
 		up_x,up_y,up_z);*/
 	gluLookAt(0.0f, 0.0f, 0.0f,
-		0.0f,0.0f,1.0f,
+		0.0f,0.0f,-1.0f,
 		0.0f, 1.0f, 0.0f);
 }

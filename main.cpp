@@ -48,7 +48,7 @@ void display(void)
 	//
 	levels.at(level_index)->draw();
 	//
-	Util::DrawText(0,0,std::string("100/5"), 0,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+	Util::DrawText(0,0,std::string("100/5"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
 	//
 	glFlush();
 	glutSwapBuffers();
@@ -84,7 +84,7 @@ void keyboard_special(int key, int x, int y)
 //mapeia o mous
 void mouse_move(int x, int y)
 {
-	float dx=0.008, dy=-0.008;
+	float dx=0.05, dy=-0.05;
 	int difx = x-cam_x;
 	if(!difx)
 		dx=0;
@@ -95,9 +95,16 @@ void mouse_move(int x, int y)
 		dy=0;
 	else if(dify>0)
 		dy=-dy;
+	//
+/*	if(abs(difx)<2)
+		dx=0;
+	if(abs(dify)<2)
+		dy=0;*/
+	//
 	cam_x=x;
 	cam_y=y;
-	Camera::getCamera()->translate_look(dx,dy,0.0f);
+	Camera::getCamera()->translate_look_angle(dx,dy);
+	//std::cout<<"difx: "<<difx<<" dify: "<<dify<<std::endl;
 	//Camera::getCamera()->setLook(wx, wy, wz);
 }
 // Mapeia o clique

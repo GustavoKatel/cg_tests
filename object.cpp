@@ -15,6 +15,7 @@ Object::Object(const char *model_file_name)
 		objData = new objLoader();
 		objData->load(model_name);
 		loadTextures();
+		loadBoundingBox();
 	}else{
 		objData = NULL;
 		textures= NULL;
@@ -69,15 +70,15 @@ void Object::loadTextures()
 			last_char = mtl->texture_filename[strlen(mtl->texture_filename)-1];
 		}
 		//
-/*		int img_width=0, img_height=0, img_channels=0;
-		unsigned char *ntexture = SOIL_load_image
-			(
+		/*		int img_width=0, img_height=0, img_channels=0;
+				unsigned char *ntexture = SOIL_load_image
+				(
 				mtl->texture_filename,
 				&img_width,
 				&img_height,
 				&img_channels,
 				SOIL_LOAD_AUTO
-			);*/
+				);*/
 		GLuint ntexture = this->loadImage(mtl->texture_filename,0);
 		if(!ntexture)
 		{
@@ -86,18 +87,18 @@ void Object::loadTextures()
 		}
 		total++;
 		textures[i]=ntexture;
-//		glGenTextures(1,&textures[i]);
+		//		glGenTextures(1,&textures[i]);
 		std::cout<<"texture generated: "<<textures[i]<<std::endl;
 		glBindTexture(GL_TEXTURE_2D, textures[i]);
 
-//		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ntexture);
+		//		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ntexture);
 		//gluBuild2DMipmaps( GL_TEXTURE_2D, GL_RGB, img_width, img_height, GL_RGBA, GL_UNSIGNED_BYTE, ntexture);
 		//std::cout<<"i: "<<i<<std::endl;
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		//
-//		SOIL_free_image_data(ntexture);	
+		//		SOIL_free_image_data(ntexture);	
 	}
 }
 
@@ -181,14 +182,15 @@ void Object::draw()
 	float angle_x, angle_y;
 	Camera::getCamera()->getLookAngle(&angle_x, &angle_y);
 	//
+	//
 	glTranslatef(-cpx, -cpy, -cpz);
+	//camera rotate
+	glRotatef(angle_x, 0,1,0);
+	glRotatef(angle_y, 1,0,0);
+	//
 	glTranslatef(this->pos_x, 
 			this->pos_y, 
 			this->pos_z);
-	//
-	//camera rotate
-	glRotatef(angle_x, 1,0,0);
-	glRotatef(angle_y, 0,1,0);
 	//
 	unsigned int i;
 	for(i=0;i<rot_list.size();i++)
@@ -196,6 +198,8 @@ void Object::draw()
 				rot_list.at(i)[1],
 				rot_list.at(i)[2],
 				rot_list.at(i)[3]);
+	//
+	this->drawBoundingBox();
 	//
 	glScalef( this->scale_x, this->scale_y, this->scale_z);
 	//
@@ -272,8 +276,8 @@ void Object::draw()
 		//------------- normal ---------------
 		if( normal_0 )
 			glNormal3f(normal_0->e[0],
-			normal_0->e[1],
-			normal_0->e[2] );
+					normal_0->e[1],
+					normal_0->e[2] );
 		//------------- texture coord --------
 		if(has_tex && o->texture_index[0]>=0 )
 			glTexCoord2f(   objData->textureList[o->texture_index[0]]->e[0],
@@ -287,8 +291,8 @@ void Object::draw()
 		//------------- normal ---------------
 		if( normal_1 )
 			glNormal3f(normal_1->e[0],
-			normal_1->e[1],
-			normal_1->e[2] );
+					normal_1->e[1],
+					normal_1->e[2] );
 		//------------- texture coord --------
 		if(has_tex && o->texture_index[1]>=0)
 			glTexCoord2f(   objData->textureList[o->texture_index[1]]->e[0],
@@ -302,8 +306,8 @@ void Object::draw()
 		//------------- normal ---------------
 		if( normal_2 )
 			glNormal3f(normal_2->e[0],
-			normal_2->e[1],
-			normal_2->e[2] );
+					normal_2->e[1],
+					normal_2->e[2] );
 		//------------- texture coord --------
 		if(has_tex && o->texture_index[2]>=0)
 			glTexCoord2f(   objData->textureList[o->texture_index[2]]->e[0],
@@ -326,13 +330,13 @@ void Object::draw()
 
 
 GLuint Object::loadImage(const char* lpszPathName, int flag) {
-    return SOIL_load_OGL_texture(
-        lpszPathName,
-        SOIL_LOAD_AUTO,
-        SOIL_CREATE_NEW_ID,
-	SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT   
-	//SOIL_FLAG_INVERT_Y
-	);
+	return SOIL_load_OGL_texture(
+			lpszPathName,
+			SOIL_LOAD_AUTO,
+			SOIL_CREATE_NEW_ID,
+			SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT   
+			//SOIL_FLAG_INVERT_Y
+			);
 }
 
 // Funcao que imprime as coordenadas de um vertice.
@@ -531,4 +535,85 @@ void Object::normalize(obj_vector *v)
 	v->e[0] = v->e[0]/s;
 	v->e[1] = v->e[1]/s;
 	v->e[2] = v->e[2]/s;
+}
+
+void Object::loadBoundingBox()
+{
+	bb_x1 = bb_y1 = bb_z1 = bb_x2 = bb_y2 = bb_z2 = 0.0;
+	//
+	for(int i=0; i<objData->faceCount; i++)
+	{
+		obj_face *o = objData->faceList[i];
+
+		int t = 0;
+		for(t=0;t<3;t++)
+		{
+			//0
+			if(bb_x1>objData->vertexList[o->vertex_index[t]]->e[0])
+				bb_x1 = objData->vertexList[o->vertex_index[t]]->e[0];
+			if(bb_x2<objData->vertexList[o->vertex_index[t]]->e[0])
+				bb_x2 = objData->vertexList[o->vertex_index[t]]->e[0];
+			//1
+			if(bb_y1>objData->vertexList[o->vertex_index[t]]->e[1])
+				bb_y1 = objData->vertexList[o->vertex_index[t]]->e[1];
+			if(bb_y2<objData->vertexList[o->vertex_index[t]]->e[0])
+				bb_y2 = objData->vertexList[o->vertex_index[t]]->e[0];
+			//2
+			if(bb_z1>objData->vertexList[o->vertex_index[t]]->e[1])
+				bb_z1 = objData->vertexList[o->vertex_index[t]]->e[1];
+			if(bb_z2<objData->vertexList[o->vertex_index[t]]->e[0])
+				bb_z2 = objData->vertexList[o->vertex_index[t]]->e[0];
+		}
+	}
+
+}
+
+void Object::drawBoundingBox()
+{
+	//draw bounding box
+	glColor3f(1,0,0);
+	glBegin(GL_QUADS);
+	//front face
+	glVertex3f(bb_x1, bb_y1, bb_z1);
+	glVertex3f(bb_x2, bb_y1, bb_z1);
+	glVertex3f(bb_x2, bb_y2, bb_z1);
+
+//	glVertex3f(bb_x1, bb_y1, bb_z1);
+	glVertex3f(bb_x1, bb_y2, bb_z1);
+//	glVertex3f(bb_x2, bb_y2, bb_z1);
+	//right face
+	glVertex3f(bb_x2, bb_y1, bb_z1);
+	glVertex3f(bb_x2, bb_y1, bb_z2);
+	glVertex3f(bb_x2, bb_y2, bb_z2);
+
+//	glVertex3f(bb_x2, bb_y1, bb_z1);
+	glVertex3f(bb_x2, bb_y2, bb_z1);
+//	glVertex3f(bb_x2, bb_y2, bb_z2);
+	//left face
+	glVertex3f(bb_x1, bb_y1, bb_z1);
+	glVertex3f(bb_x1, bb_y1, bb_z2);
+	glVertex3f(bb_x1, bb_y2, bb_z2);
+
+//	glVertex3f(bb_x1, bb_y1, bb_z1);
+	glVertex3f(bb_x1, bb_y2, bb_z1);
+//	glVertex3f(bb_x1, bb_y2, bb_z2);
+	//top face
+	glVertex3f(bb_x1, bb_y2, bb_z1);
+	glVertex3f(bb_x2, bb_y2, bb_z1);
+	glVertex3f(bb_x2, bb_y2, bb_z2);
+
+//	glVertex3f(bb_x1, bb_y2, bb_z1);
+	glVertex3f(bb_x1, bb_y2, bb_z2);
+//	glVertex3f(bb_x2, bb_y2, bb_z2);
+	//bottom face
+	glVertex3f(bb_x1, bb_y1, bb_z1);
+	glVertex3f(bb_x2, bb_y1, bb_z1);
+	glVertex3f(bb_x2, bb_y1, bb_z2);
+
+//	glVertex3f(bb_x1, bb_y1, bb_z1);
+	glVertex3f(bb_x1, bb_y1, bb_z2);
+//	glVertex3f(bb_x2, bb_y1, bb_z2);
+	glEnd();
+
+
 }

@@ -26,10 +26,10 @@ void Controller::update()
 		Camera::getCamera()->translate(-0.05,0.0f,0.0f);
 			
 	if(command_buff[q])
-		Camera::getCamera()->translate_look(-0.01,0.0f,0.0f);
+		Camera::getCamera()->translate_look_angle(-0.5,0.0f);
 
 	if(command_buff[e])		
-		Camera::getCamera()->translate_look( 0.01,0.0f,0.0f); 
+		Camera::getCamera()->translate_look_angle( 0.5,0.0f); 
 }
 
 void Controller::command(char c, int x, int y)
