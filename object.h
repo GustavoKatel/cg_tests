@@ -7,8 +7,9 @@
 #include <GL/gl.h>
 
 #include "SOIL.h"
-
 #include "objLoader.h"
+
+#include "bbox.h"
 
 class Object
 {
@@ -50,11 +51,8 @@ private:
 	void printVector(obj_vector *v);
 	obj_vector *calcNormal(obj_face *o);
 	void normalize(obj_vector *v);
-	//bounding box
-	void drawBoundingBox();
-	void loadBoundingBox();
-	float bb_x1, bb_y1, bb_z1;
-	float bb_x2, bb_y2, bb_z2;
+	//
+	BoudingBox *bbox;
 };
 
 #endif

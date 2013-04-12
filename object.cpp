@@ -15,7 +15,7 @@ Object::Object(const char *model_file_name)
 		objData = new objLoader();
 		objData->load(model_name);
 		loadTextures();
-		loadBoundingBox();
+		bbox = new BoudingBox(objData);
 	}else{
 		objData = NULL;
 		textures= NULL;
@@ -150,6 +150,11 @@ void Object::setScale(float x, float y, float z)
 	this->scale_x = x;
 	this->scale_y = y;
 	this->scale_z = z;
+	//
+	if(bbox)
+	{
+		bbox->setScale(scale_x, scale_y, scale_z);
+	}
 }
 //
 void Object::setObjData(objLoader *data)
@@ -199,9 +204,9 @@ void Object::draw()
 				rot_list.at(i)[2],
 				rot_list.at(i)[3]);
 	//
-	this->drawBoundingBox();
-	//
 	glScalef( this->scale_x, this->scale_y, this->scale_z);
+	//
+	bbox->draw();
 	//
 	for(int i=0; i<objData->faceCount; i++)
 	{
@@ -535,85 +540,4 @@ void Object::normalize(obj_vector *v)
 	v->e[0] = v->e[0]/s;
 	v->e[1] = v->e[1]/s;
 	v->e[2] = v->e[2]/s;
-}
-
-void Object::loadBoundingBox()
-{
-	bb_x1 = bb_y1 = bb_z1 = bb_x2 = bb_y2 = bb_z2 = 0.0;
-	//
-	for(int i=0; i<objData->faceCount; i++)
-	{
-		obj_face *o = objData->faceList[i];
-
-		int t = 0;
-		for(t=0;t<3;t++)
-		{
-			//0
-			if(bb_x1>objData->vertexList[o->vertex_index[t]]->e[0])
-				bb_x1 = objData->vertexList[o->vertex_index[t]]->e[0];
-			if(bb_x2<objData->vertexList[o->vertex_index[t]]->e[0])
-				bb_x2 = objData->vertexList[o->vertex_index[t]]->e[0];
-			//1
-			if(bb_y1>objData->vertexList[o->vertex_index[t]]->e[1])
-				bb_y1 = objData->vertexList[o->vertex_index[t]]->e[1];
-			if(bb_y2<objData->vertexList[o->vertex_index[t]]->e[0])
-				bb_y2 = objData->vertexList[o->vertex_index[t]]->e[0];
-			//2
-			if(bb_z1>objData->vertexList[o->vertex_index[t]]->e[1])
-				bb_z1 = objData->vertexList[o->vertex_index[t]]->e[1];
-			if(bb_z2<objData->vertexList[o->vertex_index[t]]->e[0])
-				bb_z2 = objData->vertexList[o->vertex_index[t]]->e[0];
-		}
-	}
-
-}
-
-void Object::drawBoundingBox()
-{
-	//draw bounding box
-	glColor3f(1,0,0);
-	glBegin(GL_QUADS);
-	//front face
-	glVertex3f(bb_x1, bb_y1, bb_z1);
-	glVertex3f(bb_x2, bb_y1, bb_z1);
-	glVertex3f(bb_x2, bb_y2, bb_z1);
-
-//	glVertex3f(bb_x1, bb_y1, bb_z1);
-	glVertex3f(bb_x1, bb_y2, bb_z1);
-//	glVertex3f(bb_x2, bb_y2, bb_z1);
-	//right face
-	glVertex3f(bb_x2, bb_y1, bb_z1);
-	glVertex3f(bb_x2, bb_y1, bb_z2);
-	glVertex3f(bb_x2, bb_y2, bb_z2);
-
-//	glVertex3f(bb_x2, bb_y1, bb_z1);
-	glVertex3f(bb_x2, bb_y2, bb_z1);
-//	glVertex3f(bb_x2, bb_y2, bb_z2);
-	//left face
-	glVertex3f(bb_x1, bb_y1, bb_z1);
-	glVertex3f(bb_x1, bb_y1, bb_z2);
-	glVertex3f(bb_x1, bb_y2, bb_z2);
-
-//	glVertex3f(bb_x1, bb_y1, bb_z1);
-	glVertex3f(bb_x1, bb_y2, bb_z1);
-//	glVertex3f(bb_x1, bb_y2, bb_z2);
-	//top face
-	glVertex3f(bb_x1, bb_y2, bb_z1);
-	glVertex3f(bb_x2, bb_y2, bb_z1);
-	glVertex3f(bb_x2, bb_y2, bb_z2);
-
-//	glVertex3f(bb_x1, bb_y2, bb_z1);
-	glVertex3f(bb_x1, bb_y2, bb_z2);
-//	glVertex3f(bb_x2, bb_y2, bb_z2);
-	//bottom face
-	glVertex3f(bb_x1, bb_y1, bb_z1);
-	glVertex3f(bb_x2, bb_y1, bb_z1);
-	glVertex3f(bb_x2, bb_y1, bb_z2);
-
-//	glVertex3f(bb_x1, bb_y1, bb_z1);
-	glVertex3f(bb_x1, bb_y1, bb_z2);
-//	glVertex3f(bb_x2, bb_y1, bb_z2);
-	glEnd();
-
-
 }
