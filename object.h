@@ -4,12 +4,13 @@
 #include <iostream>
 #include <string.h>
 #include <vector>
+#include <map>
+#include <iterator>
+#include <string>
 #include <GL/gl.h>
 
 #include "SOIL.h"
 #include "objLoader.h"
-
-#include "bbox.h"
 
 class Object
 {
@@ -35,10 +36,14 @@ public:
 	void setTextures(GLuint *textures);
 	GLuint *getTextures();
 	//
+	virtual int is_touched(float x, float y, float z);
+	//
 	virtual void draw();
 	//
 	void printModelInfo();
-private:
+	//
+	static std::map<std::string, objLoader *> cache_objs;
+protected:
 	float pos_x, pos_y, pos_z;
 	std::vector<float *> rot_list;
 	float scale_x, scale_y, scale_z;
@@ -52,7 +57,11 @@ private:
 	obj_vector *calcNormal(obj_face *o);
 	void normalize(obj_vector *v);
 	//
-	BoudingBox *bbox;
+	void loadBoundingBox();
+	void drawBoundingBox();
+	float box_x1, box_y1, box_z1;
+	float box_x2, box_y2, box_z2;
+	//
 };
 
 #endif

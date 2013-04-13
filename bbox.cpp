@@ -46,8 +46,8 @@ BoudingBox::~BoudingBox()
 
 int BoudingBox::is_touched(float x, float y, float z)
 {
-	//bx1*sx ...
-	return 0;
+	std::cout<<"z: "<<z<<" sz*bz1: "<<sz*bz1<<" sz*bz2: "<<sz*bz2<<std::endl;
+	return /*(x>=sx*bx1 && x<=sx*bx2 && y>=sy*by1 && y<=sy*by2 &&*/( z>=sz*bz1 && z<=sz*bz2);
 }
 
 void BoudingBox::setScale(float x, float y, float z)

@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
+#include <iterator>
 
 #include <GL/gl.h>
 #include <GL/glut.h>
@@ -11,8 +13,6 @@
 #include "object.h"
 #include "level.h"
 #include "util.h"
-
-#define CAM_STEPS 80
 
 float shot_x=0.0;
 float shot_y=0.0;
@@ -35,6 +35,9 @@ void update()
 	//
 	Controller::getController()->update();
 	Camera::getCamera()->update();
+	//
+	if(levels.size()>=0)
+		levels.at(level_index)->update();
 }
 
 //-----------------------------------------------------------------------------
@@ -60,7 +63,8 @@ void keyboard(unsigned char key, int x, int y)
 {
 	if(key==27)
 		exit(0);
-	Controller::getController()->command(key, x, y);
+	if(levels.size()>0)
+		levels.at(level_index)->command(key, x, y);
 }
 void keyboard_special(int key, int x, int y)
 {
@@ -84,7 +88,7 @@ void keyboard_special(int key, int x, int y)
 //mapeia o mous
 void mouse_move(int x, int y)
 {
-	float dx=0.05, dy=-0.05;
+	float dx=0.08, dy=-0.08;
 	int difx = x-cam_x;
 	if(!difx)
 		dx=0;
@@ -110,7 +114,8 @@ void mouse_move(int x, int y)
 // Mapeia o clique
 void mouse_click(int button, int state,int x, int y)
 {
-	std::cout<<"SHOT!\n";
+	if(levels.size()>0)
+		levels.at(level_index)->click(button, x, y);
 }
 //
 void reshape(int w, int h) //callback de redimensionamento
@@ -128,6 +133,11 @@ void FreeMemFunc(void)
 		if(levels.at(i))
 			delete levels.at(i);
 	levels.clear();
+	//
+	std::map<std::string, objLoader*>::iterator it;
+	for(it=Object::cache_objs.begin(); it!=Object::cache_objs.end(); ++it)
+		delete it->second;
+	Object::cache_objs.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -137,7 +147,7 @@ int main(int argc, char **argv)
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
 	glutInitWindowSize(WIDTH, HEIGHT);
-	glutInitWindowPosition(100,20);
+	glutInitWindowPosition(200,20);
 	glutCreateWindow("CGPROJ");
 
 //	glutFullScreen();
@@ -167,7 +177,7 @@ int main(int argc, char **argv)
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glLightModelf(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
 	//Camera
-	Camera::getCamera()->setPos(0.0,0.05f,0.0f);
+	Camera::getCamera()->setPos(0.0,0.08f,0.0f);
 	Camera::getCamera()->setLook(0.0,0.0,-1.0);
 	Camera::getCamera()->setViewport(WIDTH, HEIGHT);
 	Camera::getCamera()->update();

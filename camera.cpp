@@ -19,9 +19,9 @@ Camera *Camera::getCamera()
 Camera::Camera()
 {
 	pos_x = pos_y = pos_z = 0.0;
-	look_x = look_y = look_z = 0.0;
+	look_x = look_y = 0.0; look_z=-1.0;
 	up_x = up_z = 0.0; up_y = 1.0;
-	angle_x = angle_y = 0.0;
+	angle_y = angle_x = 0.0;
 }
 
 Camera::~Camera()
@@ -143,6 +143,7 @@ void Camera::translate_look_angle(float ldx, float ldy)
 		angle_x=angle_x-360;
 	if(angle_x<0)
 		angle_x=angle_x+360;
+	//std::cout<<"ax: "<<angle_x<<std::endl;
 
 	this->angle_y+=ldy;
 	if(angle_y>360)
@@ -187,7 +188,7 @@ void Camera::update()
 	/*gluLookAt(pos_x,pos_y,pos_z,
 		look_x,look_y,look_z,
 		up_x,up_y,up_z);*/
-	gluLookAt(0.0f, 0.0f, 0.0f,
-		0.0f,0.0f,-1.0f,
+	gluLookAt(0.0f, 0.03f, 0.0f,
+		0.0f,0.03f,-1.0f,
 		0.0f, 1.0f, 0.0f);
 }

@@ -6,16 +6,34 @@
 #include "SOIL.h"
 #include "camera.h"
 
+std::map<std::string, objLoader*> Object::cache_objs;
+
 Object::Object(const char *model_file_name)
 {
 	strcpy(model_name, model_file_name);
 	//
+	objData = NULL;
 	if(strlen(model_name))
 	{
-		objData = new objLoader();
-		objData->load(model_name);
+		std::map<std::string, objLoader*>::iterator it;
+		it = cache_objs.begin();
+		for(it=Object::cache_objs.begin(); it!=Object::cache_objs.end(); ++it)
+		{
+			if(! it->first.compare(std::string(model_name)) )
+			{
+				objData=it->second;
+				break;
+			}
+		}
+		//
+		if(!objData)
+		{
+			objData = new objLoader();
+			objData->load(model_name);
+			cache_objs[std::string(model_name)]=objData;
+		}
 		loadTextures();
-		bbox = new BoudingBox(objData);
+		loadBoundingBox();
 	}else{
 		objData = NULL;
 		textures= NULL;
@@ -31,8 +49,7 @@ Object::Object(const char *model_file_name)
 
 Object::~Object()
 {
-	if(objData)
-		delete objData;
+	objData = NULL;
 	unsigned int i;
 	for(i=0;i<rot_list.size();i++)
 		free(rot_list.at(i));
@@ -150,11 +167,6 @@ void Object::setScale(float x, float y, float z)
 	this->scale_x = x;
 	this->scale_y = y;
 	this->scale_z = z;
-	//
-	if(bbox)
-	{
-		bbox->setScale(scale_x, scale_y, scale_z);
-	}
 }
 //
 void Object::setObjData(objLoader *data)
@@ -175,6 +187,69 @@ GLuint *Object::getTextures()
 	return this->textures;
 }
 //
+int Object::is_touched(float x, float y, float z)
+{
+	float ax, ay;
+	Camera::getCamera()->getLookAngle(&ay, &ax);
+	float cx, cy, cz;
+	Camera::getCamera()->getPos(&cx, &cy, &cz);
+	//scale and camera translation
+	float bx1 = scale_x*box_x1;
+	float by1 = scale_y*box_y1;
+	float bz1 = scale_z*box_z1;
+	//
+	float bx2 = scale_x*box_x2;
+	float by2 = scale_y*box_y2;
+	float bz2 = scale_z*box_z2;
+	//rotation object?
+	//translation object pos
+	bx1+=pos_x;
+	by1+=pos_y;
+	bz1+=pos_z;
+	//
+	bx2+=pos_x;
+	by2+=pos_y;
+	bz2+=pos_z;
+	//rotation camera about y
+	float bx1_r = bx1*cos(ay) - bz1*sin(ay);
+	bz1 = bx1*sin(ay) + bz1*cos(ay);
+	bx1 = bx1_r;
+
+	float bx2_r = bx2*cos(ay) - bz2*sin(ay);
+	bz2 = bx2*sin(ay) + bz2*cos(ay);
+	bx2 = bx2_r;
+	//rotation camera about x
+	float by1_r = by1*cos(ax) + bz1*sin(ax);
+	bz1 = -by1*sin(ax) + bz1*cos(ax);
+	by1 = by1_r;
+
+	float by2_r = by2*cos(ax) + bz2*sin(ax);
+	bz2 = -by2*sin(ax) + bz2*cos(ax);
+	by2 = by2_r;
+	//translation camera
+	bx1+= -cx;
+	by1+= -cy;
+	bz1+= -cz;
+	//       
+	bx2+= -cx;
+	by2+= -cy;
+	bz2+= -cz;
+	//translation to target point
+	bx1+=-x;
+	by1+=-y;
+	bz1+=-z;
+	//
+	bx2+=-x;
+	by2+=-y;
+	bz2+=-z;
+	//
+/*	std::cout<<"------------------\nx: "<<x<<" bx1: "<<bx1<<" bx2: "<<bx2<<std::endl;
+	std::cout<<"y: "<<y<<" by1: "<<by1<<" by2: "<<by2<<std::endl;
+	std::cout<<"z: "<<z<<" bz1: "<<bz1<<" bz2: "<<bz2<<std::endl;*/
+	//return (bx1<=0 && bx2>=0 && by1<=0 && by2>=0 && bz1<=0 && bz2>=0);
+	return 0;
+}
+//
 void Object::draw()
 {
 	glMatrixMode(GL_MODELVIEW);
@@ -184,14 +259,14 @@ void Object::draw()
 	//Camera
 	float cpx, cpy, cpz;
 	Camera::getCamera()->getPos(&cpx, &cpy, &cpz);
-	float angle_x, angle_y;
-	Camera::getCamera()->getLookAngle(&angle_x, &angle_y);
+	float angle_y, angle_x;
+	Camera::getCamera()->getLookAngle(&angle_y, &angle_x);
 	//
 	//
 	glTranslatef(-cpx, -cpy, -cpz);
 	//camera rotate
-	glRotatef(angle_x, 0,1,0);
-	glRotatef(angle_y, 1,0,0);
+	glRotatef(angle_y, 0,1,0);
+	glRotatef(angle_x, 1,0,0);
 	//
 	glTranslatef(this->pos_x, 
 			this->pos_y, 
@@ -206,7 +281,7 @@ void Object::draw()
 	//
 	glScalef( this->scale_x, this->scale_y, this->scale_z);
 	//
-	bbox->draw();
+	//this->drawBoundingBox();
 	//
 	for(int i=0; i<objData->faceCount; i++)
 	{
@@ -540,4 +615,105 @@ void Object::normalize(obj_vector *v)
 	v->e[0] = v->e[0]/s;
 	v->e[1] = v->e[1]/s;
 	v->e[2] = v->e[2]/s;
+}
+
+void Object::loadBoundingBox()
+{
+	this->box_x1 = 0.0;
+	this->box_y1 = 0.0;
+	this->box_z1 = 0.0;
+	//
+	this->box_x2 = 0.0;
+	this->box_y2 = 0.0;
+	this->box_z2 = 0.0;
+	//
+	if(!objData)
+		return;
+	for(int i=0; i<objData->faceCount; i++)
+	{
+		obj_face *o = objData->faceList[i];
+
+		int t = 0;
+		for(t=0;t<3;t++)
+		{
+			//0
+			if(box_x1>objData->vertexList[o->vertex_index[t]]->e[0])
+				box_x1 = objData->vertexList[o->vertex_index[t]]->e[0];
+			if(box_x2<objData->vertexList[o->vertex_index[t]]->e[0])
+				box_x2 = objData->vertexList[o->vertex_index[t]]->e[0];
+			//1
+			if(box_y1>objData->vertexList[o->vertex_index[t]]->e[1])
+				box_y1 = objData->vertexList[o->vertex_index[t]]->e[1];
+			if(box_y2<objData->vertexList[o->vertex_index[t]]->e[1])
+				box_y2 = objData->vertexList[o->vertex_index[t]]->e[1];
+			//2
+			if(box_z1>objData->vertexList[o->vertex_index[t]]->e[2])
+				box_z1 = objData->vertexList[o->vertex_index[t]]->e[2];
+			if(box_z2<objData->vertexList[o->vertex_index[t]]->e[2])
+				box_z2 = objData->vertexList[o->vertex_index[t]]->e[2];
+		}
+	}
+
+}
+
+void Object::drawBoundingBox()
+{
+	//draw bounding box
+	glColor3f(1,0,0);
+	glBegin(GL_TRIANGLES);
+	//front face
+	glVertex3f(box_x1, box_y1, box_z1);
+	glVertex3f(box_x2, box_y1, box_z1);
+	glVertex3f(box_x2, box_y2, box_z1);
+
+	glVertex3f(box_x1, box_y1, box_z1);
+	glVertex3f(box_x1, box_y2, box_z1);
+	glVertex3f(box_x2, box_y2, box_z1);
+	//right face
+	glColor3f(0,1,0);
+	glVertex3f(box_x2, box_y1, box_z1);
+	glVertex3f(box_x2, box_y1, box_z2);
+	glVertex3f(box_x2, box_y2, box_z2);
+
+	glVertex3f(box_x2, box_y1, box_z1);
+	glVertex3f(box_x2, box_y2, box_z1);
+	glVertex3f(box_x2, box_y2, box_z2);
+	//left face
+	glVertex3f(box_x1, box_y1, box_z1);
+	glVertex3f(box_x1, box_y1, box_z2);
+	glVertex3f(box_x1, box_y2, box_z2);
+
+	glVertex3f(box_x1, box_y1, box_z1);
+	glVertex3f(box_x1, box_y2, box_z1);
+	glVertex3f(box_x1, box_y2, box_z2);
+	//top face
+	glVertex3f(box_x1, box_y2, box_z1);
+	glVertex3f(box_x2, box_y2, box_z1);
+	glVertex3f(box_x2, box_y2, box_z2);
+
+	glVertex3f(box_x1, box_y2, box_z1);
+	glVertex3f(box_x1, box_y2, box_z2);
+	glVertex3f(box_x2, box_y2, box_z2);
+	//bottom face
+
+	glVertex3f(box_x1, box_y1, box_z1);
+	glVertex3f(box_x2, box_y1, box_z1);
+	glVertex3f(box_x2, box_y1, box_z2);
+
+	glVertex3f(box_x1, box_y1, box_z1);
+	glVertex3f(box_x1, box_y1, box_z2);
+	glVertex3f(box_x2, box_y1, box_z2);
+	//back face
+	glColor3f(1,0,0);
+	glVertex3f(box_x1, box_y1, box_z2);
+	glVertex3f(box_x2, box_y1, box_z2);
+	glVertex3f(box_x2, box_y2, box_z2);
+
+	glVertex3f(box_x1, box_y1, box_z2);
+	glVertex3f(box_x1, box_y2, box_z2);
+	glVertex3f(box_x2, box_y2, box_z2);
+
+
+	glEnd();
+
 }
