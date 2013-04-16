@@ -8,4 +8,6 @@
 
 #define SHOT_VELOCITY 10
 
+#define COLLISION_LIMIT 2
+
 #endif

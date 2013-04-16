@@ -20,17 +20,24 @@ public:
 	void command(unsigned char key, int x, int y);
 	void click(int button, int x, int y);
 	//
+	int is_shooting();
+	//
 	void update();
 	void draw();
 private:
 	void initTargets();
 	void initTrees();
 	//
+	void check_collision();
+	//
 	int difficulty;
 	std::vector<Target *> targets;
 	std::vector<Object *> trees;
 	//
-	int is_shooting;
+	Object *bullet;
+	Object *gun;
+	//
+	int _is_shooting;
 
 };
 

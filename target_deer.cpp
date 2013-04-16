@@ -2,7 +2,7 @@
 
 Target_Deer::Target_Deer():Target("models/Deer.obj")	
 { 
-	this->setScale(0.05,0.05,0.05); 
+	this->setScale(0.2,0.2,0.2); 
 };
 
 Target_Deer::~Target_Deer(){};

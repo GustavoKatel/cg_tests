@@ -3,13 +3,18 @@
 #include <GL/glut.h>
 #include <math.h>
 
+#include "FreeImage.h"
 #include "SOIL.h"
 #include "camera.h"
 
 std::map<std::string, objLoader*> Object::cache_objs;
 
+int Object::id_control=1;
+
 Object::Object(const char *model_file_name)
 {
+	id=id_control++;
+	//
 	strcpy(model_name, model_file_name);
 	//
 	objData = NULL;
@@ -81,41 +86,15 @@ void Object::loadTextures()
 		}
 		//fix \n in the end of the string
 		char last_char = mtl->texture_filename[strlen(mtl->texture_filename)-1];
-		while(last_char=='\n' || last_char=='\t')
+		while(last_char=='\n' || last_char=='\t' || last_char=='\r')
 		{
 			mtl->texture_filename[strlen(mtl->texture_filename)-1]='\0';
 			last_char = mtl->texture_filename[strlen(mtl->texture_filename)-1];
 		}
 		//
-		/*		int img_width=0, img_height=0, img_channels=0;
-				unsigned char *ntexture = SOIL_load_image
-				(
-				mtl->texture_filename,
-				&img_width,
-				&img_height,
-				&img_channels,
-				SOIL_LOAD_AUTO
-				);*/
 		GLuint ntexture = this->loadImage(mtl->texture_filename,0);
-		if(!ntexture)
-		{
-			std::cout<<"Error trying to load image: "<<mtl->texture_filename<<" texture ptr: "<<ntexture<<std::endl;
-			continue;
-		}
 		total++;
 		textures[i]=ntexture;
-		//		glGenTextures(1,&textures[i]);
-		std::cout<<"texture generated: "<<textures[i]<<std::endl;
-		glBindTexture(GL_TEXTURE_2D, textures[i]);
-
-		//		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ntexture);
-		//gluBuild2DMipmaps( GL_TEXTURE_2D, GL_RGB, img_width, img_height, GL_RGBA, GL_UNSIGNED_BYTE, ntexture);
-		//std::cout<<"i: "<<i<<std::endl;
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		//
-		//		SOIL_free_image_data(ntexture);	
 	}
 }
 
@@ -187,13 +166,18 @@ GLuint *Object::getTextures()
 	return this->textures;
 }
 //
+int Object::getId()
+{
+	return this->id;
+}
+
 int Object::is_touched(float x, float y, float z)
 {
 	float ax, ay;
 	Camera::getCamera()->getLookAngle(&ay, &ax);
 	float cx, cy, cz;
 	Camera::getCamera()->getPos(&cx, &cy, &cz);
-	//scale and camera translation
+/*	//scale and camera translation
 	float bx1 = scale_x*box_x1;
 	float by1 = scale_y*box_y1;
 	float bz1 = scale_z*box_z1;
@@ -243,30 +227,24 @@ int Object::is_touched(float x, float y, float z)
 	by2+=-y;
 	bz2+=-z;
 	//
-/*	std::cout<<"------------------\nx: "<<x<<" bx1: "<<bx1<<" bx2: "<<bx2<<std::endl;
+	std::cout<<"------------------\nx: "<<x<<" bx1: "<<bx1<<" bx2: "<<bx2<<std::endl;
 	std::cout<<"y: "<<y<<" by1: "<<by1<<" by2: "<<by2<<std::endl;
-	std::cout<<"z: "<<z<<" bz1: "<<bz1<<" bz2: "<<bz2<<std::endl;*/
+	std::cout<<"z: "<<z<<" bz1: "<<bz1<<" bz2: "<<bz2<<std::endl;
 	//return (bx1<=0 && bx2>=0 && by1<=0 && by2>=0 && bz1<=0 && bz2>=0);
-	return 0;
-}
-//
-void Object::draw()
-{
+	*/
+	GLdouble modelview[16];
+	GLdouble projection[16];
+	GLdouble bx1=box_x1, by1=box_y1, bz1=box_z1;
+	GLdouble bx2=box_x2, by2=box_y2, bz2=box_z2;
+	//transformations
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
-	//
 	glLoadIdentity();
-	//Camera
-	float cpx, cpy, cpz;
-	Camera::getCamera()->getPos(&cpx, &cpy, &cpz);
-	float angle_y, angle_x;
-	Camera::getCamera()->getLookAngle(&angle_y, &angle_x);
 	//
-	//
-	glTranslatef(-cpx, -cpy, -cpz);
+	glTranslatef(-cx, -cy, -cz);
 	//camera rotate
-	glRotatef(angle_y, 0,1,0);
-	glRotatef(angle_x, 1,0,0);
+	glRotatef(ay, 0,1,0);
+//	glRotatef(ax, 1,0,0);
 	//
 	glTranslatef(this->pos_x, 
 			this->pos_y, 
@@ -281,7 +259,95 @@ void Object::draw()
 	//
 	glScalef( this->scale_x, this->scale_y, this->scale_z);
 	//
-	//this->drawBoundingBox();
+	glGetDoublev( GL_MODELVIEW_MATRIX, modelview );
+	glGetDoublev( GL_PROJECTION_MATRIX, projection );
+	//
+	glPopMatrix();
+	//
+//	std::cout<<"------------------\nx: "<<x<<" bx1: "<<bx1<<" bx2: "<<bx2<<std::endl;
+//	std::cout<<"y: "<<y<<" by1: "<<by1<<" by2: "<<by2<<std::endl;
+//	std::cout<<"z: "<<z<<" bz1: "<<bz1<<" bz2: "<<bz2<<std::endl;
+
+	//first vertex
+	GLdouble w=1.0;
+	matrix_x_vertex(modelview, &bx1, &by1, &bz1, &w);
+	matrix_x_vertex(projection, &bx1, &by1, &bz1, &w);
+	bx1=bx1/w;
+	by1=by1/w;
+	bz1=bz1/w;
+	//second
+	w=1.0;
+	matrix_x_vertex(modelview, &bx2, &by2, &bz2, &w);
+	matrix_x_vertex(projection, &bx2, &by2, &bz2, &w);
+	bx2=bx2/w;
+	by2=by2/w;
+	bz2=bz2/w;
+
+	bx1-=x;
+	by1-=y;
+	bz1-=z;
+	//
+	bx2-=x;
+	by2-=y;
+	bz2-=z;
+
+	std::cout<<"------------------\nx: "<<x<<" bx1: "<<bx1<<" bx2: "<<bx2<<std::endl;
+	std::cout<<"y: "<<y<<" by1: "<<by1<<" by2: "<<by2<<std::endl;
+	std::cout<<"z: "<<z<<" bz1: "<<bz1<<" bz2: "<<bz2<<std::endl;
+	//
+//	return (bx1<=0 && bx2>=0 && by1<=0 && by2>=0 && bz1<=0 && bz2>=0);
+	
+	return 0;
+}
+//
+void Object::update()
+{
+	
+}
+//
+void Object::draw(int boundingBox, int simple)
+{
+	glMatrixMode(GL_MODELVIEW);
+	glLoadName(id);
+	if(!simple)
+	glPushMatrix();
+	//
+	if(!simple)
+	glLoadIdentity();
+	//Camera
+	float cpx, cpy, cpz;
+	Camera::getCamera()->getPos(&cpx, &cpy, &cpz);
+	float angle_y, angle_x;
+	Camera::getCamera()->getLookAngle(&angle_y, &angle_x);
+	//
+	//
+	if(!simple)
+	{
+		glRotatef(angle_x, 1,0,0);
+		glTranslatef(-cpx, -cpy, -cpz);
+	}
+	//camera rotate
+	if(!simple)
+	{
+		glRotatef(angle_y, 0,1,0);
+	}
+	//
+	if(!simple)
+	glTranslatef(this->pos_x, 
+			this->pos_y, 
+			this->pos_z);
+	//
+	unsigned int i;
+	for(i=0;i<rot_list.size();i++)
+		glRotatef(rot_list.at(i)[0],
+				rot_list.at(i)[1],
+				rot_list.at(i)[2],
+				rot_list.at(i)[3]);
+	//
+	glScalef( this->scale_x, this->scale_y, this->scale_z);
+	//
+	if(boundingBox)
+		this->drawBoundingBox();
 	//
 	for(int i=0; i<objData->faceCount; i++)
 	{
@@ -359,7 +425,7 @@ void Object::draw()
 					normal_0->e[1],
 					normal_0->e[2] );
 		//------------- texture coord --------
-		if(has_tex && o->texture_index[0]>=0 )
+		//if(has_tex && o->texture_index[0]>=0 )
 			glTexCoord2f(   objData->textureList[o->texture_index[0]]->e[0],
 					objData->textureList[o->texture_index[0]]->e[1] );
 		//------------- coord ----------------
@@ -374,7 +440,7 @@ void Object::draw()
 					normal_1->e[1],
 					normal_1->e[2] );
 		//------------- texture coord --------
-		if(has_tex && o->texture_index[1]>=0)
+		//if(has_tex && o->texture_index[1]>=0)
 			glTexCoord2f(   objData->textureList[o->texture_index[1]]->e[0],
 					objData->textureList[o->texture_index[1]]->e[1] );
 		//------------- coord ----------------
@@ -389,7 +455,7 @@ void Object::draw()
 					normal_2->e[1],
 					normal_2->e[2] );
 		//------------- texture coord --------
-		if(has_tex && o->texture_index[2]>=0)
+		//if(has_tex && o->texture_index[2]>=0)
 			glTexCoord2f(   objData->textureList[o->texture_index[2]]->e[0],
 					objData->textureList[o->texture_index[2]]->e[1] );
 		//------------- coord ----------------
@@ -405,18 +471,92 @@ void Object::draw()
 			freeNormal=0;
 		}
 	}
+	if(!simple)
 	glPopMatrix();
 }
 
-
 GLuint Object::loadImage(const char* lpszPathName, int flag) {
-	return SOIL_load_OGL_texture(
+	GLuint texId;
+//---------------- SOIL AUTO
+	/*return SOIL_load_OGL_texture(
 			lpszPathName,
 			SOIL_LOAD_AUTO,
 			SOIL_CREATE_NEW_ID,
 			SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT   
 			//SOIL_FLAG_INVERT_Y
-			);
+			);*/
+//-------------------- SOIL MANUAL
+	int img_width=0, img_height=0, img_channels=0;
+	unsigned char *ntexture = SOIL_load_image
+		(
+			lpszPathName, //"models/Rabbit_D.png",
+			&img_width,
+			&img_height,
+			&img_channels,
+			SOIL_LOAD_AUTO
+				);
+	if(!ntexture)
+	{
+		std::cerr << "SOIL loading error: " << SOIL_last_result() << "\n";
+		exit(1);
+	}
+	glGenTextures(1,&texId);
+	std::cout<<"texture generated: "<<texId<<" for: "<<lpszPathName<<std::endl;
+	glBindTexture(GL_TEXTURE_2D, texId);
+
+//	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGB, GL_UNSIGNED_BYTE, ntexture);
+	gluBuild2DMipmaps( GL_TEXTURE_2D, GL_RGBA, img_width, img_height, GL_RGB, GL_UNSIGNED_BYTE, ntexture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glLightModelf(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
+	//
+	SOIL_free_image_data(ntexture);
+
+//-------------- FreeImage manual
+/*	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
+	FIBITMAP *bitmap=NULL;
+	// check the file signature and deduce its format
+	// (the second argument is currently not used by FreeImage)
+	fif = FreeImage_GetFileType(lpszPathName, 0);
+	if(fif == FIF_UNKNOWN) {
+		// no signature ?
+		// try to guess the file format from the file extension
+		fif = FreeImage_GetFIFFromFilename(lpszPathName);
+	}
+	// check that the plugin has reading capabilities ...
+	if((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
+		// ok, let's load the file
+		bitmap = FreeImage_Load(fif, lpszPathName, flag);
+		// unless a bad file format, we are done !
+	}
+	if(!bitmap)
+	{
+		std::cout<<"Error trying to load image: "<<lpszPathName<<" :GustavoKatel"<<std::endl;
+		exit(-1);
+	}
+	glGenTextures(1,&texId);
+	std::cout<<"texture generated: "<<texId<<std::endl;
+	glBindTexture(GL_TEXTURE_2D, texId);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	glTexImage2D(GL_TEXTURE_2D, 
+			0, 
+			GL_RGBA, 
+			FreeImage_GetWidth(bitmap), 
+			FreeImage_GetHeight(bitmap), 
+			0, 
+			GL_RGBA, 
+			GL_UNSIGNED_BYTE, 
+			FreeImage_GetBits(bitmap) );
+
+	FreeImage_Unload(bitmap);*/
+	//
+	return texId;
 }
 
 // Funcao que imprime as coordenadas de um vertice.
@@ -616,6 +756,25 @@ void Object::normalize(obj_vector *v)
 	v->e[1] = v->e[1]/s;
 	v->e[2] = v->e[2]/s;
 }
+
+void Object::matrix_x_vertex(GLdouble *matrix, GLdouble *x, GLdouble *y, GLdouble *z, GLdouble *w)
+{
+	GLdouble nx=0.0, ny=0.0, nz=0.0, nw=1.0;
+	//
+/*	nx = (*x)*matrix[0] + (*y)*matrix[1] + (*z)*matrix[2] + (*w)*matrix[3];
+	ny = (*x)*matrix[4] + (*y)*matrix[5] + (*z)*matrix[6] + (*w)*matrix[7];
+	nz = (*x)*matrix[8] + (*y)*matrix[9] + (*z)*matrix[10] + (*w)*matrix[11];
+	nw = (*x)*matrix[12] + (*y)*matrix[13] + (*z)*matrix[14] + (*w)*matrix[15];*/
+	nx = (*x)*matrix[0] + (*y)*matrix[4] + (*z)*matrix[8] + matrix[12];
+	ny = (*x)*matrix[1] + (*y)*matrix[5] + (*z)*matrix[9] + matrix[13];
+	nz = (*x)*matrix[2] + (*y)*matrix[6] + (*z)*matrix[10] + matrix[14];
+	//
+	*x=nx;
+	*y=ny;
+	*z=nz;
+	*w=nw;
+}
+
 
 void Object::loadBoundingBox()
 {

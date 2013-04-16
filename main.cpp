@@ -24,8 +24,7 @@ float ds_z=0.0;
 
 int cam_x=0, cam_y=0;
 
-//Object *obj=NULL;
-unsigned int level_index=0;
+int level_index=-1;
 std::vector<Level *> levels;
 
 //-----------------------------------------------------------------------------
@@ -36,7 +35,7 @@ void update()
 	Controller::getController()->update();
 	Camera::getCamera()->update();
 	//
-	if(levels.size()>=0)
+	if(levels.size()>=0 && level_index>=0)
 		levels.at(level_index)->update();
 }
 
@@ -47,11 +46,18 @@ void display(void)
 	//
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
 	//
-	levels.at(level_index)->draw();
+	float vw, vh;
+	Camera::getCamera()->getViewport(&vw, &vh);
 	//
-	Util::DrawText(0,0,std::string("100/5"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+	if(levels.size()>0 && level_index>=0)
+		levels.at(level_index)->draw();
+	else
+	{
+		Util::DrawText(vw/2-30,vh/2,std::string("[S]tart"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+		Util::DrawText(vw/2-30,vh/2-24 ,std::string("[E]xit"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+	}
+	//
 	//
 	glFlush();
 	glutSwapBuffers();
@@ -63,8 +69,21 @@ void keyboard(unsigned char key, int x, int y)
 {
 	if(key==27)
 		exit(0);
-	if(levels.size()>0)
+	if(levels.size()>0 && level_index>=0)
 		levels.at(level_index)->command(key, x, y);
+	else{
+		switch(key)
+		{
+			case 's':
+			case 'S':
+				level_index++;
+				levels.at(level_index)->command('s', x, y);
+				break;
+			case 'e':
+			case 'E':
+				exit(1);
+		}
+	}
 }
 void keyboard_special(int key, int x, int y)
 {
@@ -85,10 +104,13 @@ void keyboard_special(int key, int x, int y)
 	}
 }
 //-----------------------------------------------------------------------------
-//mapeia o mous
+//mapeia o mouse
 void mouse_move(int x, int y)
 {
-	float dx=0.08, dy=-0.08;
+	if(levels.size()>0 && level_index>=0 && levels.at(level_index)->is_shooting())
+		return;
+	//
+	float dx=0.5, dy=-0.5;
 	int difx = x-cam_x;
 	if(!difx)
 		dx=0;
@@ -114,7 +136,7 @@ void mouse_move(int x, int y)
 // Mapeia o clique
 void mouse_click(int button, int state,int x, int y)
 {
-	if(levels.size()>0)
+	if(levels.size()>0 && level_index>=0)
 		levels.at(level_index)->click(button, x, y);
 }
 //
@@ -169,30 +191,44 @@ int main(int argc, char **argv)
 
 	atexit(FreeMemFunc);
 
-	//glEnable(GL_TEXTURE_2D);
-	//glEnable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);                        // Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);
 	glShadeModel(GL_SMOOTH);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glLightModelf(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
 	//Camera
-	Camera::getCamera()->setPos(0.0,0.08f,0.0f);
+	Camera::getCamera()->setPos(0.0,0.5f,0.0f);
 	Camera::getCamera()->setLook(0.0,0.0,-1.0);
 	Camera::getCamera()->setViewport(WIDTH, HEIGHT);
 	Camera::getCamera()->update();
 	//
 	levels.push_back(new Level());
+	levels.push_back(new Level(2));
+	level_index=1;
 	//
 	GLfloat LightAmbient[]  = {0.1f, 0.1f, 0.1f};
 	GLfloat LightDiffuse[]  = {1.0f, 1.0f, 1.0f};
 	GLfloat LightSpecular[] = {1.0f, 1.0f, 1.0f};
-	GLfloat LightPosition[] = {0.0f, 0.0f,-2.0f, 0.0f }; 
+	GLfloat LightPosition[] = {0.0f, 0.0f, 2.0f, 0.0f }; 
 	glLightfv(GL_LIGHT0, GL_AMBIENT, LightAmbient);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, LightDiffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, LightSpecular);
 	glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
 	glEnable(GL_LIGHT0);
+	//
+	GLfloat LightAmbient_1[]  = {0.1f, 0.1f, 0.1f};
+	GLfloat LightDiffuse_1[]  = {1.0f, 1.0f, 1.0f};
+	GLfloat LightSpecular_1[] = {1.0f, 1.0f, 1.0f};
+	GLfloat LightPosition_1[] = {0.0f, 0.0f,-2.0f, 0.0f }; 
+	glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbient_1);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse_1);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, LightSpecular_1);
+	glLightfv(GL_LIGHT1, GL_POSITION, LightPosition_1);
+	glEnable(GL_LIGHT1);
+
+	//
+	glEnable(GL_LIGHTING);
 	//
 	glutMainLoop();
 

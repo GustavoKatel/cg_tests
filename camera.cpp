@@ -143,8 +143,9 @@ void Camera::translate_look_angle(float ldx, float ldy)
 		angle_x=angle_x-360;
 	if(angle_x<0)
 		angle_x=angle_x+360;
-	//std::cout<<"ax: "<<angle_x<<std::endl;
+	//
 
+//	if(angle_y<30 || angle_y>300)
 	this->angle_y+=ldy;
 	if(angle_y>360)
 		angle_y=angle_y-360;

@@ -53,6 +53,18 @@ void Util::World2Window(float x, float y, float z, int *win_x, int *win_y)
 	*win_y = (int)cy;
 }
 
+float Util::GetZat(int x, int y)
+{
+	float winZ=0.0, winY=0.0;
+	GLint viewport[4];
+	glGetIntegerv( GL_VIEWPORT, viewport );
+
+	winY = (float)viewport[3] - (float)y;
+	//
+	glReadPixels( x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ );
+	return winZ;
+}
+
 void Util::DrawText(int x, int y, std::string text, float r, float g, float b, void *size)
 {
 	glMatrixMode(GL_PROJECTION);
