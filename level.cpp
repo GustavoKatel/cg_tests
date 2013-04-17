@@ -9,14 +9,17 @@
 #include "camera.h"
 #include "util.h"
 #include "defines.h"
+#include "player.h"
 
 #include "target_deer.h"
-#include "target_rabbit.h"
-
-#define check_touch(x,y,z) for(unsigned int i=0;i<targets.size();i++) if(targets.at(i)->is_touched(x,y,z)) { std::cout<<"touch!\n"; return; }
+#include "target_tiger.h"
 
 Level::Level(int difficulty)
 {
+	loading=0;
+	loading_message = std::string("Level #! Loading!");
+	_is_finished=0;
+	//
 	this->difficulty = difficulty;
 	//
 	initTargets();
@@ -44,36 +47,43 @@ Level::~Level()
 	delete bullet;
 }
 
+void Level::start()
+{
+	_is_finished=0;
+	_is_shooting=0;
+	//
+	int total_life=0;	
+	for(unsigned int i=0;i<targets.size();i++)
+	{
+		delete targets.at(i);
+	}
+	targets.clear(); initTargets();
+	for(unsigned int i=0;i<targets.size();i++)
+	{
+		total_life+=targets.at(i)->getLife();
+	}
+	Player::bullets=total_life/20;
+	std::cout<<"bullets: "<<Player::bullets<<" life: "<<total_life<<std::endl;
+}
+
 void Level::command(unsigned char key, int x, int y)
 {
 	float px=0.0, py=0.0, pz=0.0;
 	Camera::getCamera()->getPos(&px, &py, &pz);
-	switch(key)
+	if(!_is_shooting && check_collision() && key=='w')
 	{
-		case 'w':
-			check_touch(-px, -py, -(pz+PLAYER_STEP));
-			break;
-		case 's':
-			check_touch(-px, -py, -(pz-PLAYER_STEP));
-			break;
-		case 'd':
-			check_touch(-(px+PLAYER_STEP), -py, -pz);
-			break;
-		case 'a':
-			check_touch(-(px-PLAYER_STEP), -py, -pz);
-			break;
-
-	}
-	if(_is_shooting)
+		std::cout<<"Don't move!"<<std::endl;
 		return;
+	}
 	Controller::getController()->command(key, x, y);
 }
 
 void Level::click(int button, int x, int y)
 {
-	if(button==0)
+	if(button==0 && !_is_shooting && Player::bullets>0 && !loading)
 	{
 		_is_shooting=1;
+		Player::bullets--;
 	}
 }
 
@@ -84,10 +94,17 @@ int Level::is_shooting()
 
 void Level::update()
 {
+	if(loading)
+	{
+		loading--;
+		return;
+	}
 	float cx, cy, cz;
 	Camera::getCamera()->getPos(&cx, &cy, &cz);
 	float ay;
 	Camera::getCamera()->getLookAngle(&ay, NULL);
+	float vw, vh;
+	Camera::getCamera()->getViewport(&vw, &vh);
 	if(_is_shooting)
 	{
 		Camera::getCamera()->translate(0.0f, 0.0f,PLAYER_STEP*SHOT_VELOCITY);
@@ -96,17 +113,60 @@ void Level::update()
 		gun->setPos(cx, cy, cz);
 	}
 	bullet->setPos(cx, cy-2, cz+2);
+	glutWarpPointer(vw/2, vh/2);//+vh/4);
 
-	for(int i=0;i<targets.size();i++)
+	for(unsigned int i=0;i<targets.size();i++)
 	{
 		targets.at(i)->update();
 	}
 	//
-	//check_collision();
+	if(check_collision())
+	{
+		unsigned int i;
+		for(i=0;i<targets.size();i++)
+		{
+			if(targets.at(i)->getLife()>0)
+				break;
+		}
+		if(i==targets.size())
+		{
+			loading_message=std::string("YOU WIN!");
+			end_game(1);
+		}
+	}
+	//
+	if(!Player::bullets && !_is_shooting)
+	{
+		int total = 0;
+		for(unsigned int i=0;i<targets.size();i++)
+		{
+			total+=targets.at(i)->getLife();
+		}
+		if(total)
+			end_game(2);
+	}
+}
+
+int Level::is_finished()
+{
+	return _is_finished;
+}
+
+void Level::end_game(int code)
+{
+	loading=60;
+	_is_finished=code;
 }
 
 void Level::draw()
 {
+	if(loading)
+	{
+		float vw, vh;
+		Camera::getCamera()->getViewport(&vw, &vh);
+		Util::DrawText(vw/2-30, vh/2, loading_message, 1, 0, 0);
+	}	
+	//
 	//floor
 	GLfloat params[4];
 	params[0] = 0.5;
@@ -114,9 +174,9 @@ void Level::draw()
 	params[2] = 0.5;
 	params[3] = 1.0;
 	//ambient
-	params[0] = 1.0;
+	params[0] = 0.1;
 	params[1] = 1.0;
-	params[2] = 1.0;
+	params[2] = 0.1;
 	glMaterialfv(GL_FRONT, GL_AMBIENT, params);
 	//diffuse
 	params[0] = 0.1;
@@ -129,13 +189,13 @@ void Level::draw()
 	params[2] = 0.0;
 	glMaterialfv(GL_FRONT, GL_SPECULAR, params);
 	//
-	glMaterialf(GL_FRONT, GL_SHININESS, 128);
+	glMaterialf(GL_FRONT, GL_SHININESS, 0);
 	glColor3f(0.0f,1.0f,0.0f);
 	//
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	float angle_y, angle_x;
-	Camera::getCamera()->getLookAngle(&angle_y, &angle_x);
+	float angle_x, angle_y;
+	Camera::getCamera()->getLookAngle(&angle_x, &angle_y);
 	float cx, cy, cz;
 	Camera::getCamera()->getPos(&cx, &cy, &cz);
 	//
@@ -198,7 +258,9 @@ void Level::initTargets()
 		if(difficulty==1)
 			t = new Target_Deer();
 		if(difficulty==2)
-			t = new Target_Rabbit();
+			t = new Target_Deer();
+		if(difficulty==3)
+			t = new Target_Deer();
 		targets.push_back(t);
 		targets.at(i)->setPos( (rand()%1 ? -1 : 1)*rand()%10,
 				0.0,
@@ -220,12 +282,59 @@ void Level::initTrees()
 	}
 }
 
-void Level::check_collision()
+int Level::check_collision()
 {
 	float vw, vh;
 	Camera::getCamera()->getViewport(&vw, &vh);
 	float cx, cy, cz;
 	Camera::getCamera()->getPos(&cx, &cy, &cz);
+	float zbuff = Util::GetZat(vw/2,vh/2);
+	int res=0;
+	if(zbuff<=0.959400)
+	{
+		Target *t = this->get_target_touched();
+		if(t)
+		{
+			if(_is_shooting)
+			{
+				t->shot();
+				loading_message = std::string("GREAT JOB!");
+				loading=60;
+				_is_shooting=0;
+				Camera::getCamera()->setPos(0.0,0.5f,0.0f);
+			}
+		}else{
+			if(_is_shooting)
+			{
+				_is_shooting=0;
+				Camera::getCamera()->setPos(0.0,0.5f,0.0f);
+				loading_message = std::string("OPS!");
+				loading=60;
+				
+			}
+		}
+		res=1;
+	}else if(zbuff>0.99 && _is_shooting && (cz>15||cz<-15) )
+	{
+		if(!Player::bullets)
+		{
+			loading_message=std::string("YOU LOSE!");
+			end_game(2);
+		}
+		_is_shooting=0;
+		Camera::getCamera()->setPos(0.0,0.5f,0.0f);
+		res=0;
+	}
+	return res;
+}
+
+Target *Level::get_target_touched()
+{
+	float vw, vh;
+	Camera::getCamera()->getViewport(&vw, &vh);
+	float cx, cy, cz;
+	Camera::getCamera()->getPos(&cx, &cy, &cz);
+	
 
  	GLuint buff[64];
  	GLint touches, view[4];
@@ -266,10 +375,10 @@ void Level::check_collision()
 		for(j=0;j<targets.size();j++)
 			if(targets.at(j)->getId()==tid)
 			{
-				std::cout<<"z-buffer: "<<Util::GetZat(vw/2,vh/2)<<" cz: "<<cz<<std::endl;
-				//targets.at(j)->die();
+				return targets.at(j);
 			}
 	}
 
  	glMatrixMode(GL_MODELVIEW);
+	return NULL;
 }

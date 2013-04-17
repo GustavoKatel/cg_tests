@@ -37,7 +37,6 @@ public:
 	GLuint *getTextures();
 	//
 	int getId();
-	virtual int is_touched(float x, float y, float z);
 	//
 	virtual void update();
 	virtual void draw(int boundingBox=0, int simple=0);

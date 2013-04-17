@@ -10,9 +10,6 @@ public:
 	void setPos(float px, float py, float pz);
 	void getPos(float *px, float *py, float *pz);
 	//
-	void setLook(float lx, float ly, float lz);
-	void getLook(float *lx, float *ly, float *lz);
-	//
 	void setLookAngle(float lax, float lay);
 	void getLookAngle(float *lax, float *lay);
 	//

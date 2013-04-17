@@ -28,10 +28,10 @@ void Controller::update()
 		Camera::getCamera()->translate(-PLAYER_STEP,0.0f,0.0f);
 			
 	if(command_buff[q])
-		Camera::getCamera()->translate_look_angle(-0.5,0.0f);
+		Camera::getCamera()->translate_look_angle(0.0f,-0.5f);
 
 	if(command_buff[e])		
-		Camera::getCamera()->translate_look_angle( 0.5,0.0f); 
+		Camera::getCamera()->translate_look_angle(0.0f, 0.5f); 
 }
 
 void Controller::command(char c, int x, int y)

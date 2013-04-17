@@ -171,134 +171,6 @@ int Object::getId()
 	return this->id;
 }
 
-int Object::is_touched(float x, float y, float z)
-{
-	float ax, ay;
-	Camera::getCamera()->getLookAngle(&ay, &ax);
-	float cx, cy, cz;
-	Camera::getCamera()->getPos(&cx, &cy, &cz);
-/*	//scale and camera translation
-	float bx1 = scale_x*box_x1;
-	float by1 = scale_y*box_y1;
-	float bz1 = scale_z*box_z1;
-	//
-	float bx2 = scale_x*box_x2;
-	float by2 = scale_y*box_y2;
-	float bz2 = scale_z*box_z2;
-	//rotation object?
-	//translation object pos
-	bx1+=pos_x;
-	by1+=pos_y;
-	bz1+=pos_z;
-	//
-	bx2+=pos_x;
-	by2+=pos_y;
-	bz2+=pos_z;
-	//rotation camera about y
-	float bx1_r = bx1*cos(ay) - bz1*sin(ay);
-	bz1 = bx1*sin(ay) + bz1*cos(ay);
-	bx1 = bx1_r;
-
-	float bx2_r = bx2*cos(ay) - bz2*sin(ay);
-	bz2 = bx2*sin(ay) + bz2*cos(ay);
-	bx2 = bx2_r;
-	//rotation camera about x
-	float by1_r = by1*cos(ax) + bz1*sin(ax);
-	bz1 = -by1*sin(ax) + bz1*cos(ax);
-	by1 = by1_r;
-
-	float by2_r = by2*cos(ax) + bz2*sin(ax);
-	bz2 = -by2*sin(ax) + bz2*cos(ax);
-	by2 = by2_r;
-	//translation camera
-	bx1+= -cx;
-	by1+= -cy;
-	bz1+= -cz;
-	//       
-	bx2+= -cx;
-	by2+= -cy;
-	bz2+= -cz;
-	//translation to target point
-	bx1+=-x;
-	by1+=-y;
-	bz1+=-z;
-	//
-	bx2+=-x;
-	by2+=-y;
-	bz2+=-z;
-	//
-	std::cout<<"------------------\nx: "<<x<<" bx1: "<<bx1<<" bx2: "<<bx2<<std::endl;
-	std::cout<<"y: "<<y<<" by1: "<<by1<<" by2: "<<by2<<std::endl;
-	std::cout<<"z: "<<z<<" bz1: "<<bz1<<" bz2: "<<bz2<<std::endl;
-	//return (bx1<=0 && bx2>=0 && by1<=0 && by2>=0 && bz1<=0 && bz2>=0);
-	*/
-	GLdouble modelview[16];
-	GLdouble projection[16];
-	GLdouble bx1=box_x1, by1=box_y1, bz1=box_z1;
-	GLdouble bx2=box_x2, by2=box_y2, bz2=box_z2;
-	//transformations
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-	//
-	glTranslatef(-cx, -cy, -cz);
-	//camera rotate
-	glRotatef(ay, 0,1,0);
-//	glRotatef(ax, 1,0,0);
-	//
-	glTranslatef(this->pos_x, 
-			this->pos_y, 
-			this->pos_z);
-	//
-	unsigned int i;
-	for(i=0;i<rot_list.size();i++)
-		glRotatef(rot_list.at(i)[0],
-				rot_list.at(i)[1],
-				rot_list.at(i)[2],
-				rot_list.at(i)[3]);
-	//
-	glScalef( this->scale_x, this->scale_y, this->scale_z);
-	//
-	glGetDoublev( GL_MODELVIEW_MATRIX, modelview );
-	glGetDoublev( GL_PROJECTION_MATRIX, projection );
-	//
-	glPopMatrix();
-	//
-//	std::cout<<"------------------\nx: "<<x<<" bx1: "<<bx1<<" bx2: "<<bx2<<std::endl;
-//	std::cout<<"y: "<<y<<" by1: "<<by1<<" by2: "<<by2<<std::endl;
-//	std::cout<<"z: "<<z<<" bz1: "<<bz1<<" bz2: "<<bz2<<std::endl;
-
-	//first vertex
-	GLdouble w=1.0;
-	matrix_x_vertex(modelview, &bx1, &by1, &bz1, &w);
-	matrix_x_vertex(projection, &bx1, &by1, &bz1, &w);
-	bx1=bx1/w;
-	by1=by1/w;
-	bz1=bz1/w;
-	//second
-	w=1.0;
-	matrix_x_vertex(modelview, &bx2, &by2, &bz2, &w);
-	matrix_x_vertex(projection, &bx2, &by2, &bz2, &w);
-	bx2=bx2/w;
-	by2=by2/w;
-	bz2=bz2/w;
-
-	bx1-=x;
-	by1-=y;
-	bz1-=z;
-	//
-	bx2-=x;
-	by2-=y;
-	bz2-=z;
-
-	std::cout<<"------------------\nx: "<<x<<" bx1: "<<bx1<<" bx2: "<<bx2<<std::endl;
-	std::cout<<"y: "<<y<<" by1: "<<by1<<" by2: "<<by2<<std::endl;
-	std::cout<<"z: "<<z<<" bz1: "<<bz1<<" bz2: "<<bz2<<std::endl;
-	//
-//	return (bx1<=0 && bx2>=0 && by1<=0 && by2>=0 && bz1<=0 && bz2>=0);
-	
-	return 0;
-}
 //
 void Object::update()
 {
@@ -317,8 +189,8 @@ void Object::draw(int boundingBox, int simple)
 	//Camera
 	float cpx, cpy, cpz;
 	Camera::getCamera()->getPos(&cpx, &cpy, &cpz);
-	float angle_y, angle_x;
-	Camera::getCamera()->getLookAngle(&angle_y, &angle_x);
+	float angle_x, angle_y;
+	Camera::getCamera()->getLookAngle(&angle_x, &angle_y);
 	//
 	//
 	if(!simple)
@@ -477,14 +349,6 @@ void Object::draw(int boundingBox, int simple)
 
 GLuint Object::loadImage(const char* lpszPathName, int flag) {
 	GLuint texId;
-//---------------- SOIL AUTO
-	/*return SOIL_load_OGL_texture(
-			lpszPathName,
-			SOIL_LOAD_AUTO,
-			SOIL_CREATE_NEW_ID,
-			SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT   
-			//SOIL_FLAG_INVERT_Y
-			);*/
 //-------------------- SOIL MANUAL
 	int img_width=0, img_height=0, img_channels=0;
 	unsigned char *ntexture = SOIL_load_image
@@ -515,46 +379,6 @@ GLuint Object::loadImage(const char* lpszPathName, int flag) {
 	//
 	SOIL_free_image_data(ntexture);
 
-//-------------- FreeImage manual
-/*	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
-	FIBITMAP *bitmap=NULL;
-	// check the file signature and deduce its format
-	// (the second argument is currently not used by FreeImage)
-	fif = FreeImage_GetFileType(lpszPathName, 0);
-	if(fif == FIF_UNKNOWN) {
-		// no signature ?
-		// try to guess the file format from the file extension
-		fif = FreeImage_GetFIFFromFilename(lpszPathName);
-	}
-	// check that the plugin has reading capabilities ...
-	if((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
-		// ok, let's load the file
-		bitmap = FreeImage_Load(fif, lpszPathName, flag);
-		// unless a bad file format, we are done !
-	}
-	if(!bitmap)
-	{
-		std::cout<<"Error trying to load image: "<<lpszPathName<<" :GustavoKatel"<<std::endl;
-		exit(-1);
-	}
-	glGenTextures(1,&texId);
-	std::cout<<"texture generated: "<<texId<<std::endl;
-	glBindTexture(GL_TEXTURE_2D, texId);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	glTexImage2D(GL_TEXTURE_2D, 
-			0, 
-			GL_RGBA, 
-			FreeImage_GetWidth(bitmap), 
-			FreeImage_GetHeight(bitmap), 
-			0, 
-			GL_RGBA, 
-			GL_UNSIGNED_BYTE, 
-			FreeImage_GetBits(bitmap) );
-
-	FreeImage_Unload(bitmap);*/
 	//
 	return texId;
 }
@@ -761,13 +585,10 @@ void Object::matrix_x_vertex(GLdouble *matrix, GLdouble *x, GLdouble *y, GLdoubl
 {
 	GLdouble nx=0.0, ny=0.0, nz=0.0, nw=1.0;
 	//
-/*	nx = (*x)*matrix[0] + (*y)*matrix[1] + (*z)*matrix[2] + (*w)*matrix[3];
+	nx = (*x)*matrix[0] + (*y)*matrix[1] + (*z)*matrix[2] + (*w)*matrix[3];
 	ny = (*x)*matrix[4] + (*y)*matrix[5] + (*z)*matrix[6] + (*w)*matrix[7];
 	nz = (*x)*matrix[8] + (*y)*matrix[9] + (*z)*matrix[10] + (*w)*matrix[11];
-	nw = (*x)*matrix[12] + (*y)*matrix[13] + (*z)*matrix[14] + (*w)*matrix[15];*/
-	nx = (*x)*matrix[0] + (*y)*matrix[4] + (*z)*matrix[8] + matrix[12];
-	ny = (*x)*matrix[1] + (*y)*matrix[5] + (*z)*matrix[9] + matrix[13];
-	nz = (*x)*matrix[2] + (*y)*matrix[6] + (*z)*matrix[10] + matrix[14];
+	nw = (*x)*matrix[12] + (*y)*matrix[13] + (*z)*matrix[14] + (*w)*matrix[15];
 	//
 	*x=nx;
 	*y=ny;

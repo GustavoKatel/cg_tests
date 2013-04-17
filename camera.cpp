@@ -43,19 +43,6 @@ void Camera::getPos(float *px, float *py, float *pz)
 	if(pz) *pz = pos_z;
 }
 
-void Camera::setLook(float lx, float ly, float lz)
-{
-	look_x = lx;
-	look_y = ly;
-	look_z = lz;
-}
-void Camera::getLook(float *lx, float *ly, float *lz)
-{
-	if(lx) *lx = look_x;
-	if(ly) *ly = look_y;
-	if(lz) *lz = look_z;
-}
-
 void Camera::setLookAngle(float lax, float lay)
 {
 	this->angle_x = lax;
@@ -114,7 +101,6 @@ void Camera::translate(float dx, float dy, float dz)
 		//
 		pos_z-=dz;
 		look_z-=dz;
-		//std::cout<<"loo_z: "<<look_z<<" pos_z: "<<pos_z<<std::endl;
 	}
 }
 
@@ -139,28 +125,17 @@ void Camera::translate_look(float ldx, float ldy, float ldz)
 void Camera::translate_look_angle(float ldx, float ldy)
 {
 	this->angle_x+=ldx;
-	if(angle_x>360)
-		angle_x=angle_x-360;
-	if(angle_x<0)
-		angle_x=angle_x+360;
+	if(angle_x>=30)
+		angle_x=30;
+	else if(angle_x<=-40)
+		angle_x=-40;
 	//
 
-//	if(angle_y<30 || angle_y>300)
 	this->angle_y+=ldy;
-	if(angle_y>360)
-		angle_y=angle_y-360;
-	if(angle_y<0)
-		angle_y=angle_y+360;
 }
 
 float Camera::inc(float v1, float v2, float x, float y, float z)
 {
-	/*if( (1+look_z/1+abs(look_z)) - (1+pos_z/1+abs(pos_z)) >=0)
-	{
-		return v1-v2;
-	}else{
-		return v1+v2;
-	}*/
 	if(look_z-pos_z>=0)
 	{
 		if(x)
@@ -186,9 +161,6 @@ void Camera::update()
 			viewport_w/viewport_h,
 			0.05f,
 			150.0f);
-	/*gluLookAt(pos_x,pos_y,pos_z,
-		look_x,look_y,look_z,
-		up_x,up_y,up_z);*/
 	gluLookAt(0.0f, 0.03f, 0.0f,
 		0.0f,0.03f,-1.0f,
 		0.0f, 1.0f, 0.0f);

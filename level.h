@@ -17,6 +17,8 @@ public:
 	Level(int difficulty=1);
 	~Level();
 	//
+	void start();
+	//
 	void command(unsigned char key, int x, int y);
 	void click(int button, int x, int y);
 	//
@@ -24,11 +26,20 @@ public:
 	//
 	void update();
 	void draw();
+	//
+	int is_finished();
 private:
+	int loading;
+	std::string loading_message;
+	//
 	void initTargets();
 	void initTrees();
 	//
-	void check_collision();
+	void end_game(int code=1);
+	int _is_finished;
+	//
+	Target *get_target_touched();
+	int check_collision();
 	//
 	int difficulty;
 	std::vector<Target *> targets;

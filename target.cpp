@@ -17,25 +17,15 @@ Target::~Target()
 {
 }
 
-int Target::is_touched(float x, float y, float z, int shoting)
-{
-	if(Object::is_touched(x, y, z))
-	{
-		shot();
-		return 1;
-	}
-	return 0;
-}
-
 void Target::shot()
 {
 	life-=20;
-	velocity-=PLAYER_STEP;
+	velocity-=PLAYER_STEP*0.01;
 }
 
-void Target::die()
+int Target::getLife()
 {
-	std::cout<<"I DIED!\n";
+	return life;
 }
 
 void Target::update()
@@ -52,7 +42,8 @@ void Target::update()
 
 void Target::draw(int boundingBox)
 {
-	Object::draw(boundingBox);
+	if(life)
+		Object::draw(boundingBox);
 }
 
 void Target::newPositionTarget()

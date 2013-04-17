@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <map>
@@ -13,14 +14,12 @@
 #include "object.h"
 #include "level.h"
 #include "util.h"
+#include "player.h"
 
-float shot_x=0.0;
-float shot_y=0.0;
-float shot_z=0.0;
+int Player::bullets=2;
 
-float ds_x=0.0;
-float ds_y=0.0;
-float ds_z=0.0;
+int help_window=0, about_window=0;
+int info_win=0;
 
 int cam_x=0, cam_y=0;
 
@@ -36,7 +35,28 @@ void update()
 	Camera::getCamera()->update();
 	//
 	if(levels.size()>=0 && level_index>=0)
-		levels.at(level_index)->update();
+	{
+		Level *level = levels.at(level_index);
+		switch(level->is_finished())
+		{
+			case 1:
+				if(level_index==levels.size()-1)
+					level_index=-1;
+				else{
+					level_index++;
+					levels.at(level_index)->start();
+				}
+				break;
+			case 2:
+				level_index=-1;
+				break;
+		}
+		if(level_index>=0)
+		{
+			Level *level = levels.at(level_index);
+			level->update();
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -51,11 +71,34 @@ void display(void)
 	Camera::getCamera()->getViewport(&vw, &vh);
 	//
 	if(levels.size()>0 && level_index>=0)
-		levels.at(level_index)->draw();
-	else
 	{
-		Util::DrawText(vw/2-30,vh/2,std::string("[S]tart"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
-		Util::DrawText(vw/2-30,vh/2-24 ,std::string("[E]xit"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+		levels.at(level_index)->draw();
+		//
+		std::ostringstream os;
+		os<<Player::bullets<<" balas";
+		Util::DrawText(0,1,os.str(), 1,0,0);
+	}else if(info_win)
+	{
+		info_win--;
+		if(help_window)
+		{
+			Util::DrawText(vw/2-30,vh/2,std::string("Criado por: GustavoBrito e EveraldoAndrade"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+			
+		}else if(about_window)
+		{
+			Util::DrawText(vw/2-30,vh/2,std::string("Para atirar apenas clique!"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+			Util::DrawText(vw/2-30,vh/2-24,std::string("Acerte os alvos!"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+			Util::DrawText(vw/2-30,vh/2-48,std::string("Divirta-se!"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+
+		}
+	}else{
+		Util::DrawText(vw/2-30,vh/2,std::string("      [S]tart"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+		Util::DrawText(vw/2-30,vh/2-24 ,std::string("     [H]elp"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+		Util::DrawText(vw/2-30,vh/2-48 ,std::string(" Ab[O]ut"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+		Util::DrawText(vw/2-30,vh/2-72 ,std::string("Exi[T]"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
+		//
+		help_window=0;
+		about_window=0;
 	}
 	//
 	//
@@ -77,11 +120,22 @@ void keyboard(unsigned char key, int x, int y)
 			case 's':
 			case 'S':
 				level_index++;
+				levels.at(level_index)->start();
 				levels.at(level_index)->command('s', x, y);
 				break;
-			case 'e':
-			case 'E':
+			case 't':
+			case 'T':
 				exit(1);
+			case 'h':
+			case 'H':
+				help_window=1;
+				info_win=60;
+				break;
+			case 'o':
+			case 'O':
+				about_window=1;
+				info_win=60;
+				break;
 		}
 	}
 }
@@ -122,22 +176,19 @@ void mouse_move(int x, int y)
 	else if(dify>0)
 		dy=-dy;
 	//
-/*	if(abs(difx)<2)
-		dx=0;
-	if(abs(dify)<2)
-		dy=0;*/
-	//
 	cam_x=x;
 	cam_y=y;
-	Camera::getCamera()->translate_look_angle(dx,dy);
-	//std::cout<<"difx: "<<difx<<" dify: "<<dify<<std::endl;
-	//Camera::getCamera()->setLook(wx, wy, wz);
+	Camera::getCamera()->translate_look_angle(dy,dx);
 }
 // Mapeia o clique
 void mouse_click(int button, int state,int x, int y)
 {
 	if(levels.size()>0 && level_index>=0)
 		levels.at(level_index)->click(button, x, y);
+	float vw, vh;
+	Camera::getCamera()->getViewport(&vw, &vh);
+	if(button==GLUT_RIGHT_BUTTON)
+		std::cout<<"z-buffer: "<<Util::GetZat(vw/2,vh/2)<<std::endl;
 }
 //
 void reshape(int w, int h) //callback de redimensionamento
@@ -199,13 +250,13 @@ int main(int argc, char **argv)
 	glLightModelf(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
 	//Camera
 	Camera::getCamera()->setPos(0.0,0.5f,0.0f);
-	Camera::getCamera()->setLook(0.0,0.0,-1.0);
 	Camera::getCamera()->setViewport(WIDTH, HEIGHT);
 	Camera::getCamera()->update();
 	//
 	levels.push_back(new Level());
 	levels.push_back(new Level(2));
-	level_index=1;
+	levels.push_back(new Level(3));
+	//level_index=1;
 	//
 	GLfloat LightAmbient[]  = {0.1f, 0.1f, 0.1f};
 	GLfloat LightDiffuse[]  = {1.0f, 1.0f, 1.0f};

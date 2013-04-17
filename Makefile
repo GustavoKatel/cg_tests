@@ -2,7 +2,7 @@ CC = g++
 CC_C = gcc
 CFLAGS += -Wall 
 
-LIBS += -lm -lfreeimage -lglut -lGLU -lGL -I.
+LIBS += -lm -lglut -lGLU -lGL -I.
 	
 #OBJS = list.o objLoader.o obj_parser.o string_extra.o \
 #	object.o #target.o camera.o util.o level.o
