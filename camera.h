@@ -36,7 +36,6 @@ protected:
 private:
 	float pos_x, pos_y, pos_z;
 	float angle_x, angle_y;
-	float look_x, look_y, look_z;
 	float up_x, up_y, up_z;
 	float viewport_w, viewport_h;
 	//

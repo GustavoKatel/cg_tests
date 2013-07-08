@@ -3,7 +3,6 @@
 #include <GL/glut.h>
 #include <math.h>
 
-#include "FreeImage.h"
 #include "SOIL.h"
 #include "camera.h"
 
@@ -196,11 +195,7 @@ void Object::draw(int boundingBox, int simple)
 	if(!simple)
 	{
 		glRotatef(angle_x, 1,0,0);
-		glTranslatef(-cpx, -cpy, -cpz);
-	}
-	//camera rotate
-	if(!simple)
-	{
+		glTranslatef(-cpx,-cpy, -cpz);
 		glRotatef(angle_y, 0,1,0);
 	}
 	//

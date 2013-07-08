@@ -92,6 +92,7 @@ void display(void)
 
 		}
 	}else{
+		Util::DrawText(vw/2-30,vh/2+24,std::string("Single"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
 		Util::DrawText(vw/2-30,vh/2,std::string("      [S]tart"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
 		Util::DrawText(vw/2-30,vh/2-24 ,std::string("     [H]elp"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);
 		Util::DrawText(vw/2-30,vh/2-48 ,std::string(" Ab[O]ut"), 1,1,0, GLUT_BITMAP_TIMES_ROMAN_24);

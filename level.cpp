@@ -1,6 +1,8 @@
 #include "level.h"
 
 #include <cstdlib>
+#include <string>
+#include <sstream>
 
 #include <GL/gl.h>
 #include <GL/glut.h>
@@ -31,6 +33,7 @@ Level::Level(int difficulty)
 	bullet->setScale(0.003,0.003,0.003);
 	bullet->addAngle(90, 1,0,0);
 	gun = new Object("models/L11A3.obj");
+	gun->addAngle(20,1,0,0);
 }
 
 Level::~Level()
@@ -68,13 +71,13 @@ void Level::start()
 
 void Level::command(unsigned char key, int x, int y)
 {
-	float px=0.0, py=0.0, pz=0.0;
+/*	float px=0.0, py=0.0, pz=0.0;
 	Camera::getCamera()->getPos(&px, &py, &pz);
 	if(!_is_shooting && check_collision() && key=='w')
 	{
 		std::cout<<"Don't move!"<<std::endl;
 		return;
-	}
+	}*/
 	Controller::getController()->command(key, x, y);
 }
 
@@ -160,10 +163,11 @@ void Level::end_game(int code)
 
 void Level::draw()
 {
+	int pontos_total=0;
+	float vw, vh;
+	Camera::getCamera()->getViewport(&vw, &vh);
 	if(loading)
 	{
-		float vw, vh;
-		Camera::getCamera()->getViewport(&vw, &vh);
 		Util::DrawText(vw/2-30, vh/2, loading_message, 1, 0, 0);
 	}	
 	//
@@ -224,6 +228,7 @@ void Level::draw()
 	for(i=0;i<targets.size();i++)
 	{
 		targets.at(i)->draw();
+		pontos_total+=targets.at(i)->getLife();
 	}
 	//
 	for(i=0;i<trees.size();i++)
@@ -245,6 +250,9 @@ void Level::draw()
 		gun->draw(0,1);
 		glPopMatrix();
 	}
+	std::ostringstream os;
+	os<<"Pontos de vida: "<<pontos_total;
+	Util::DrawText(0,vh-48, os.str(), 1,0,0);
 }
 
 //

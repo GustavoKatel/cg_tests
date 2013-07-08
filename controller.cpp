@@ -16,16 +16,16 @@ Controller *Controller::getController()
 void Controller::update()
 {
 	if(command_buff[w])
-		Camera::getCamera()->translate(0.0f, 0.0f, PLAYER_STEP);
+		Camera::getCamera()->translate(0.0f, 0.0f, PLAYER_STEP*5);
 	
 	if(command_buff[s])	
-		Camera::getCamera()->translate(0.0f, 0.0f,-PLAYER_STEP);
+		Camera::getCamera()->translate(0.0f, 0.0f,-PLAYER_STEP*5);
 	
 	if(command_buff[d])		
-		Camera::getCamera()->translate(PLAYER_STEP,0.0f,0.0f);
+		Camera::getCamera()->translate(PLAYER_STEP*5,0.0f,0.0f);
 			
 	if(command_buff[a])
-		Camera::getCamera()->translate(-PLAYER_STEP,0.0f,0.0f);
+		Camera::getCamera()->translate(-PLAYER_STEP*5,0.0f,0.0f);
 			
 	if(command_buff[q])
 		Camera::getCamera()->translate_look_angle(0.0f,-0.5f);

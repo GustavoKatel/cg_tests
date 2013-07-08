@@ -19,7 +19,6 @@ Camera *Camera::getCamera()
 Camera::Camera()
 {
 	pos_x = pos_y = pos_z = 0.0;
-	look_x = look_y = 0.0; look_z=-1.0;
 	up_x = up_z = 0.0; up_y = 1.0;
 	angle_y = angle_x = 0.0;
 }
@@ -80,46 +79,11 @@ void Camera::getViewport(float *w, float *h)
 //
 void Camera::translate(float dx, float dy, float dz)
 {
-	if(look_z-pos_z>=0)
-	{
-		pos_x-=dx;
-		look_x-=dx;
-		//
-		pos_y+=dy;
-		look_y+=dy;
-		//
-		pos_z+=dz;
-		look_z+=dz;
-	}
-	else
-	{
-		pos_x+=dx;
-		look_x+=dx;
-		//
-		pos_y-=dy;
-		look_y-=dy;
-		//
-		pos_z-=dz;
-		look_z-=dz;
-	}
-}
-
-void Camera::translate_look(float ldx, float ldy, float ldz)
-{
-	if(look_z-pos_z>=0)
-	{
-		look_x-=ldx;
-		//
-		look_y+=ldy;
-		//
-		look_z+=ldz;
-	}
-	else
-	{
-		look_x+=ldx;
-		look_y-=ldy;
-		look_z-=ldz;
-	}
+	pos_x+=dx;
+	//
+	pos_y-=dy;
+	//
+	pos_z-=dz;
 }
 
 void Camera::translate_look_angle(float ldx, float ldy)
@@ -136,19 +100,10 @@ void Camera::translate_look_angle(float ldx, float ldy)
 
 float Camera::inc(float v1, float v2, float x, float y, float z)
 {
-	if(look_z-pos_z>=0)
-	{
-		if(x)
-			return v1-v2;
-		else
-			return v1+v2;
-	}else{
-		if(x)
-			return v1+v2;
-		else
-			return v1-v2;
-	}
-
+	if(x)
+		return v1+v2;
+	else
+		return v1-v2;
 }
 
 void Camera::update()
